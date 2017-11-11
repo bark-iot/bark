@@ -1,0 +1,39 @@
+version: '3'
+services:
+  users-service:
+    build: ../users-service
+    command: ruby users-service.rb
+    volumes:
+      - ../users-service/:/app
+      - /usr/local/bundle
+    links:
+      - db
+    ports:
+      - 80
+    environment:
+      VIRTUAL_HOST: "*/users*"
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+    stdin_open: true
+    tty: true
+
+  lb:
+    image: dockercloud/haproxy
+    links:
+      - users-service
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 80:80
+
+  db:
+    image: postgres:latest
+    volumes:
+      - /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
