@@ -17,6 +17,11 @@ services:
       RACK_ENV:
     stdin_open: true
     tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'users-service'
 
   lb:
     image: dockercloud/haproxy
@@ -37,3 +42,23 @@ services:
       POSTGRES_USER:
       POSTGRES_PASSWORD:
       POSTGRES_DB:
+
+  logstash:
+    build: docker/logstash/
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    ports:
+      - "12201:12201/udp"
+
+  elasticsearch:
+    image: elasticsearch:latest
+    command: elasticsearch -Enetwork.host=0.0.0.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    # volumes:
+    #   - /usr/share/elasticsearch/data
+
+  kibana:
+    build: docker/kibana/
+    ports:
+      - "5601:5601"
