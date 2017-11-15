@@ -23,10 +23,34 @@ services:
         gelf-address: 'udp://localhost:12201'
         tag: 'users-service'
 
+  house-service:
+    build: ../house-service
+    command: bundle exec ruby service.rb
+    volumes:
+      - ../house-service/:/app
+    links:
+      - db
+    ports:
+      - 80
+    environment:
+      VIRTUAL_HOST: "*/houses*"
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      RACK_ENV:
+    stdin_open: true
+    tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'houses-service'
+
   lb:
     image: dockercloud/haproxy
     links:
       - users-service
+      - house-service
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
