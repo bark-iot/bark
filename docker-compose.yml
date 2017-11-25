@@ -48,6 +48,30 @@ services:
         gelf-address: 'udp://localhost:12201'
         tag: 'houses-service'
 
+  device-service:
+    build: ../device-service
+    command: bundle exec ruby service.rb
+    volumes:
+      - ../device-service/:/app
+    links:
+      - db
+    ports:
+      - 80
+    environment:
+      VIRTUAL_HOST: "*/devices*,*/*/devices*"
+      VIRTUAL_HOST_WEIGHT: 103
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      RACK_ENV:
+    stdin_open: true
+    tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'devices-service'
+
   ui:
     build: ../bark-ui
     command: npm run dev
@@ -70,6 +94,7 @@ services:
     links:
       - users-service
       - house-service
+      - device-service
       - ui
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
