@@ -31,6 +31,7 @@ services:
       - ../house-service/:/app
     links:
       - db
+      - redis
     ports:
       - 80
     environment:
@@ -40,6 +41,7 @@ services:
       POSTGRES_PASSWORD:
       POSTGRES_DB:
       RACK_ENV:
+      REDIS_URL:
     stdin_open: true
     tty: true
     logging:
@@ -71,6 +73,28 @@ services:
       options:
         gelf-address: 'udp://localhost:12201'
         tag: 'devices-service'
+
+  device-subscriber:
+    build: ../device-service
+    command: bundle exec ruby subscriber.rb
+    volumes:
+      - ../device-service/:/app
+    links:
+      - db
+      - redis
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      RACK_ENV:
+      REDIS_URL:
+    stdin_open: true
+    tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'devices-subscriber'
 
   ui:
     build: ../bark-ui
@@ -111,6 +135,9 @@ services:
       POSTGRES_USER:
       POSTGRES_PASSWORD:
       POSTGRES_DB:
+
+  redis:
+    image: redis:4.0.5
 
   logstash:
     build: docker/logstash/
