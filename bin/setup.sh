@@ -7,6 +7,7 @@ sudo sysctl -w vm.max_map_count=262144
 ../users-service/bin/setup.sh
 ../house-service/bin/setup.sh
 ../device-service/bin/setup.sh
+../trigger-service/bin/setup.sh
 
 # Setup UI
 ../bark-ui/bin/setup.sh

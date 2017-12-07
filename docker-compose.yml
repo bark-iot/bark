@@ -57,6 +57,7 @@ services:
       - ../device-service/:/app
     links:
       - db
+      - redis
     ports:
       - 80
     environment:
@@ -66,6 +67,7 @@ services:
       POSTGRES_PASSWORD:
       POSTGRES_DB:
       RACK_ENV:
+      REDIS_URL:
     stdin_open: true
     tty: true
     logging:
@@ -95,6 +97,53 @@ services:
       options:
         gelf-address: 'udp://localhost:12201'
         tag: 'devices-subscriber'
+
+  trigger-service:
+    build: ../trigger-service
+    command: bundle exec ruby service.rb
+    volumes:
+      - ../trigger-service/:/app
+    links:
+      - db
+    ports:
+      - 80
+    environment:
+      VIRTUAL_HOST: "*/triggers*,*/*/triggers*"
+      VIRTUAL_HOST_WEIGHT: 103
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      RACK_ENV:
+      REDIS_URL:
+    stdin_open: true
+    tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'triggers-service'
+
+  trigger-subscriber:
+    build: ../trigger-service
+    command: bundle exec ruby subscriber.rb
+    volumes:
+      - ../trigger-service/:/app
+    links:
+      - db
+      - redis
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      RACK_ENV:
+      REDIS_URL:
+    stdin_open: true
+    tty: true
+    logging:
+      driver: gelf
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: 'triggers-subscriber'
 
   ui:
     build: ../bark-ui
