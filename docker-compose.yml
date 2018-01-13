@@ -1,198 +1,122 @@
-version: '3'
+version: '3.4'
+
+x-env: &env
+  POSTGRES_USER:
+  POSTGRES_PASSWORD:
+  POSTGRES_DB:
+  RACK_ENV:
+  REDIS_URL:
+
+x-logging: &logging
+  logging:
+    driver: gelf
+    options:
+      gelf-address: 'udp://localhost:12201'
+      tag: '{{.Name}}'
+
+x-base-service: &base-service
+  << : *logging
+  command: bundle exec ruby service.rb
+  links:
+    - db
+    - redis
+  ports:
+    - 80
+  stdin_open: true
+  tty: true
+
+x-base-subscriber: &base-subscriber
+  << : *logging
+  command: bundle exec ruby subscriber.rb
+  links:
+    - db
+    - redis
+  environment:
+    << : *env
+  stdin_open: true
+  tty: true
+
 services:
   users-service:
+    << : *base-service
     build: ../users-service
-    command: bundle exec ruby service.rb
     volumes:
       - ../users-service/:/app
-    links:
-      - db
-    ports:
-      - 80
     environment:
+      << : *env
       VIRTUAL_HOST: "*/users*"
       VIRTUAL_HOST_WEIGHT: 101
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'users-service'
 
   house-service:
+    << : *base-service
     build: ../house-service
-    command: bundle exec ruby service.rb
     volumes:
       - ../house-service/:/app
-    links:
-      - db
-      - redis
-    ports:
-      - 80
     environment:
+      << : *env
       VIRTUAL_HOST: "*/houses*"
       VIRTUAL_HOST_WEIGHT: 102
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'houses-service'
 
   device-service:
+    << : *base-service
     build: ../device-service
-    command: bundle exec ruby service.rb
     volumes:
       - ../device-service/:/app
-    links:
-      - db
-      - redis
-    ports:
-      - 80
     environment:
+      << : *env
       VIRTUAL_HOST: "*/devices*,*/*/devices*"
       VIRTUAL_HOST_WEIGHT: 103
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'devices-service'
 
   device-subscriber:
+    << : *base-subscriber
     build: ../device-service
-    command: bundle exec ruby subscriber.rb
     volumes:
       - ../device-service/:/app
-    links:
-      - db
-      - redis
-    environment:
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'devices-subscriber'
 
   trigger-service:
+    << : *base-service
     build: ../trigger-service
-    command: bundle exec ruby service.rb
     volumes:
       - ../trigger-service/:/app
-    links:
-      - db
-    ports:
-      - 80
     environment:
+      << : *env
       VIRTUAL_HOST: "*/triggers*,*/*/triggers*"
       VIRTUAL_HOST_WEIGHT: 104
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'triggers-service'
 
   trigger-subscriber:
+    << : *base-subscriber
     build: ../trigger-service
-    command: bundle exec ruby subscriber.rb
     volumes:
       - ../trigger-service/:/app
-    links:
-      - db
-      - redis
-    environment:
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'triggers-subscriber'
 
   action-service:
+    << : *base-service
     build: ../action-service
-    command: bundle exec ruby service.rb
     volumes:
       - ../action-service/:/app
-    links:
-      - db
-    ports:
-      - 80
     environment:
+      << : *env
       VIRTUAL_HOST: "*/actions*,*/*/actions*"
       VIRTUAL_HOST_WEIGHT: 105
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'actions-service'
 
   action-subscriber:
+    << : *base-subscriber
     build: ../action-service
-    command: bundle exec ruby subscriber.rb
     volumes:
       - ../action-service/:/app
-    links:
-      - db
-      - redis
+
+  bark-service:
+    << : *base-service
+    build: ../bark-service
+    volumes:
+      - ../bark-service/:/app
     environment:
-      POSTGRES_USER:
-      POSTGRES_PASSWORD:
-      POSTGRES_DB:
-      RACK_ENV:
-      REDIS_URL:
-    stdin_open: true
-    tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'actions-subscriber'
+      << : *env
+      VIRTUAL_HOST: "*/barks*,*/*/barks*"
+      VIRTUAL_HOST_WEIGHT: 106
 
   ui:
+    << : *logging
     build: ../bark-ui
     command: npm run dev
     volumes:
@@ -203,11 +127,6 @@ services:
       VIRTUAL_HOST: "*/*"
     stdin_open: true
     tty: true
-    logging:
-      driver: gelf
-      options:
-        gelf-address: 'udp://localhost:12201'
-        tag: 'ui'
 
   lb:
     image: dockercloud/haproxy
@@ -217,6 +136,7 @@ services:
       - device-service
       - trigger-service
       - action-service
+      - bark-service
       - ui
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
