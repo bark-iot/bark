@@ -134,6 +134,17 @@ services:
     stdin_open: true
     tty: true
 
+  trigger-instance-service:
+    build: ../trigger-instance-service
+    command: bee run
+    ports:
+      - 80
+    links:
+      - db
+      - redis
+    volumes:
+      - ../trigger-instance-service:/go/src/app
+
   lb:
     image: dockercloud/haproxy
     links:
@@ -143,6 +154,7 @@ services:
       - trigger-service
       - action-service
       - bark-service
+      - trigger-instance-service
       - ui
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
