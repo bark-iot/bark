@@ -144,6 +144,12 @@ services:
       - redis
     volumes:
       - ../trigger-instance-service:/go/src/app
+    environment:
+      << : *env
+      VIRTUAL_HOST: "*/trigger-instances*,*/*/trigger-instances*"
+      VIRTUAL_HOST_WEIGHT: 107
+    stdin_open: true
+    tty: true
 
   lb:
     image: dockercloud/haproxy
