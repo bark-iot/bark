@@ -135,8 +135,9 @@ services:
     tty: true
 
   trigger-instance-service:
+    << : *logging
     build: ../trigger-instance-service
-    command: bee run
+    command: sh -c "go build && ./app"
     ports:
       - 80
     links:
@@ -146,7 +147,7 @@ services:
       - ../trigger-instance-service:/go/src/app
     environment:
       << : *env
-      VIRTUAL_HOST: "*/trigger-instances*,*/*/trigger-instances*"
+      VIRTUAL_HOST: "/trigger-instances*"
       VIRTUAL_HOST_WEIGHT: 107
     stdin_open: true
     tty: true
