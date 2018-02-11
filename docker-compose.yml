@@ -135,22 +135,26 @@ services:
     tty: true
 
   trigger-instance-service:
-    << : *logging
+    << : *base-service
     build: ../trigger-instance-service
     command: sh -c "go build && ./app"
-    ports:
-      - 80
-    links:
-      - db
-      - redis
     volumes:
       - ../trigger-instance-service:/go/src/app
     environment:
       << : *env
       VIRTUAL_HOST: "/trigger-instances*"
       VIRTUAL_HOST_WEIGHT: 107
-    stdin_open: true
-    tty: true
+
+  action-instance-service:
+    << : *base-service
+    build: ../action-instance-service
+    command: sh -c "go build && ./app"
+    volumes:
+      - ../action-instance-service:/go/src/app
+    environment:
+      << : *env
+      VIRTUAL_HOST: "/action-instances*"
+      VIRTUAL_HOST_WEIGHT: 107
 
   lb:
     image: dockercloud/haproxy
